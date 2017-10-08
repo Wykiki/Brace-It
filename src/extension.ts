@@ -9,21 +9,48 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "braceit" is now active!');
+    console.log('Congratulations, your extension "brace-it2" is now active!');
+
+    vscode.workspace.onDidChangeTextDocument(event => {
+        braceIt(event);
+    });
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
+    let disposable = vscode.commands.registerCommand('brace-it.yourself', () => {
         // The code you place here will be executed every time your command is executed
 
         // Display a message box to the user
         vscode.window.showInformationMessage('Hello World!');
+        
     });
 
     context.subscriptions.push(disposable);
+     
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+}
+
+function braceIt(event: vscode.TextDocumentChangeEvent): void {
+    console.log("In braceIt");
+    if (!event.contentChanges[0]) {
+        return;
+    }
+
+    let isSpace = checkSpace(event.contentChanges[0]);
+    let isOpenBraces = checkOpenBraces(event.contentChanges[0]);
+    if (!isSpace && !isOpenBraces)
+        console.log("No space or open braces found.");
+    
+}
+
+function checkOpenBraces(contentChange: vscode.TextDocumentContentChangeEvent): boolean {
+    return contentChange.text.endsWith("{");
+}
+
+function checkSpace(contentChange: vscode.TextDocumentContentChangeEvent): boolean {
+    return contentChange.text.endsWith(" ");
 }
