@@ -1,56 +1,61 @@
 'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "brace-it2" is now active!');
+    console.log('Congratulations, your extension "brace-it" is now active!');
 
     vscode.workspace.onDidChangeTextDocument(event => {
         braceIt(event);
     });
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
     let disposable = vscode.commands.registerCommand('brace-it.yourself', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-        
+        vscode.window.showInformationMessage('Hello World!');       
     });
 
     context.subscriptions.push(disposable);
      
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {
 }
 
 function braceIt(event: vscode.TextDocumentChangeEvent): void {
-    console.log("In braceIt");
     if (!event.contentChanges[0]) {
         return;
     }
 
     let isSpace = checkSpace(event.contentChanges[0]);
     let isOpenBraces = checkOpenBraces(event.contentChanges[0]);
-    if (!isSpace && !isOpenBraces)
-        console.log("No space or open braces found.");
-    
+    if (!isSpace && !isOpenBraces) {
+        return;
+    }
+
+    let editor = vscode.window.activeTextEditor;
+    if (!editor)
+        return;
+
+    let originalPosition = editor.selection.start.translate(0, 1);
+    let text = editor.document.getText(new vscode.Range(new vscode.Position(0, 0), originalPosition));
+    let last2Char = text.substr(text.length - 2);
+    if (last2Char === "{ " || last2Char === "{{") {
+        editor.edit((editBuilder) => {
+            editBuilder.insert(originalPosition, " ");
+        }).then(() => {
+            editor.selection = moveSelectionLeft(editor.selection, 1);
+        });
+    }
 }
 
 function checkOpenBraces(contentChange: vscode.TextDocumentContentChangeEvent): boolean {
-    return contentChange.text.endsWith("{");
+    return contentChange.text.startsWith("{");
 }
 
 function checkSpace(contentChange: vscode.TextDocumentContentChangeEvent): boolean {
     return contentChange.text.endsWith(" ");
+}
+
+function moveSelectionLeft(selection: vscode.Selection, shift: number): vscode.Selection {
+    let newPosition = selection.active.translate(0, -shift);
+    let newSelection = new vscode.Selection(newPosition, newPosition);
+    return newSelection;
 }
